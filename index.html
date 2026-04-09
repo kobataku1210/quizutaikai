@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌟 班対抗クイズ大会 🌟</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
+
+  :root {
+    --bg-deep: #0A0B1E;
+    --panel: rgba(255,255,255,0.06);
+    --panel-border: rgba(255,255,255,0.12);
+    --text: #F0F4FF;
+    --accent: #FFD700;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ===== STARFIELD ===== */
+  #starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .star {
+    position: absolute; border-radius: 50%; background: white;
+    animation: twinkle var(--dur) ease-in-out infinite var(--delay);
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: 0.2; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.4); }
+  }
+  .shooting-star {
+    position: absolute; width: 120px; height: 2px;
+    background: linear-gradient(90deg, white, transparent);
+    animation: shoot var(--sdur) linear infinite var(--sdelay); opacity: 0;
+  }
+  @keyframes shoot {
+    0% { opacity:0; transform: translateX(-120px) translateY(0) rotate(-30deg); }
+    10% { opacity:1; } 90% { opacity:1; }
+    100% { opacity:0; transform: translateX(110vw) translateY(40vh) rotate(-30deg); }
+  }
+
+  /* ===== LAYOUT ===== */
+  #app { position: relative; z-index: 1; min-height: 100vh; }
+
+  .title-bar { text-align: center; padding: 20px 20px 12px; }
+  .title-bar h1 {
+    font-family: 'Kaisei Decol', serif;
+    font-size: clamp(1.4rem, 4.5vw, 2.6rem); font-weight: 700;
+    background: linear-gradient(135deg, #FFD700, #FF6B9D, #7EB8FF, #A8FF78);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(255,215,0,0.5)); letter-spacing: 0.05em;
+  }
+  .title-bar .subtitle { font-size: 0.85rem; color: rgba(255,255,255,0.45); margin-top: 4px; letter-spacing: 0.1em; }
+
+  /* ===== MODE SELECT ===== */
+  #mode-select {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 18px; padding: 30px 20px; min-height: 70vh;
+  }
+  .team-count-box {
+    width: min(380px, 90vw); padding: 18px 22px; border-radius: 20px;
+    border: 2px solid var(--panel-border); background: var(--panel); backdrop-filter: blur(12px);
+  }
+  .team-count-box .tct-label { font-size: 0.88rem; color: rgba(255,255,255,0.6); margin-bottom: 12px; letter-spacing: 0.05em; }
+  .count-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .count-btn {
+    width: 44px; height: 44px; border-radius: 12px;
+    border: 2px solid var(--panel-border); background: transparent;
+    color: rgba(255,255,255,0.6); font-family: 'Kaisei Decol', serif;
+    font-size: 1.1rem; font-weight: 700; cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .count-btn:hover { border-color: var(--accent); color: var(--accent); transform: scale(1.1); }
+  .count-btn.selected {
+    background: var(--accent); border-color: var(--accent); color: var(--bg-deep);
+    box-shadow: 0 0 20px rgba(255,215,0,0.4); transform: scale(1.1);
+  }
+  .mode-btn {
+    display: flex; align-items: center; gap: 16px; width: min(380px, 90vw);
+    padding: 22px 28px; border-radius: 20px; border: 2px solid var(--panel-border);
+    background: var(--panel); backdrop-filter: blur(12px); cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); color: var(--text);
+  }
+  .mode-btn:hover {
+    transform: scale(1.04) translateY(-4px); border-color: var(--accent);
+    box-shadow: 0 0 40px rgba(255,215,0,0.25), 0 20px 40px rgba(0,0,0,0.4);
+  }
+  .mode-btn .icon { font-size: 2.8rem; }
+  .mode-btn .info .label { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+  .mode-btn .info .desc { font-size: 0.82rem; color: rgba(255,255,255,0.55); margin-top: 4px; }
+
+  /* ===== COMMON BUTTONS ===== */
+  .btn {
+    padding: 9px 18px; border-radius: 50px; border: 2px solid;
+    font-family: 'Zen Maru Gothic', sans-serif; font-size: 0.9rem; font-weight: 700;
+    cursor: pointer; transition: all 0.22s ease; letter-spacing: 0.04em; white-space: nowrap;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+  .btn:active { transform: translateY(0); }
+  .btn-reset { background: rgba(255,107,157,0.15); border-color: #FF6B9D; color: #FF6B9D; }
+  .btn-reset:hover { background: rgba(255,107,157,0.3); }
+  .btn-correct { background: rgba(168,255,120,0.15); border-color: #A8FF78; color: #A8FF78; }
+  .btn-correct:hover { background: rgba(168,255,120,0.3); }
+  .btn-wrong { background: rgba(255,107,107,0.15); border-color: #FF6B6B; color: #FF6B6B; }
+  .btn-wrong:hover { background: rgba(255,107,107,0.3); }
+  .btn-back { background: rgba(126,184,255,0.15); border-color: #7EB8FF; color: #7EB8FF; }
+  .btn-back:hover { background: rgba(126,184,255,0.3); }
+  .btn-gold { background: rgba(255,215,0,0.15); border-color: #FFD700; color: #FFD700; }
+  .btn-gold:hover { background: rgba(255,215,0,0.3); }
+  .btn-purple { background: rgba(199,125,255,0.15); border-color: #C77DFF; color: #C77DFF; }
+  .btn-purple:hover { background: rgba(199,125,255,0.3); }
+
+  /* ===== TEACHER SCREEN ===== */
+  #teacher-screen { padding: 8px 14px 30px; display: none; }
+
+  .back-nav { margin-bottom: 10px; }
+
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
+  }
+  .section-title {
+    font-family: 'Kaisei Decol', serif; font-size: 1.3rem; color: var(--accent);
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+  }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Scoreboard */
+  .scoreboard {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px; margin-bottom: 14px;
+  }
+  .score-card {
+    border-radius: 14px; border: 2px solid transparent; background: var(--panel);
+    backdrop-filter: blur(10px); padding: 12px 10px; text-align: center;
+    position: relative; overflow: hidden; transition: all 0.4s ease;
+  }
+  .score-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: var(--team-color); opacity: 0.08; border-radius: 12px;
+  }
+  .score-card.buzzing {
+    border-color: var(--team-color);
+    box-shadow: 0 0 28px var(--team-color), inset 0 0 16px rgba(255,255,255,0.04);
+    animation: pulse-card 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes pulse-card { from { transform: scale(1); } to { transform: scale(1.03); } }
+  .score-card .team-emoji { font-size: 1.7rem; }
+  .score-card .team-name { font-size: 0.9rem; font-weight: 700; margin: 3px 0; }
+  .score-card .team-score {
+    font-family: 'Kaisei Decol', serif; font-size: 2rem; font-weight: 700;
+    color: var(--team-color); text-shadow: 0 0 10px var(--team-color);
+  }
+  .score-card .score-label { font-size: 0.7rem; color: rgba(255,255,255,0.45); }
+
+  /* ===== QUESTION PANEL ===== */
+  .question-panel {
+    border-radius: 18px; border: 2px solid var(--panel-border);
+    background: var(--panel); backdrop-filter: blur(12px);
+    margin-bottom: 14px; overflow: hidden;
+  }
+  .question-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--panel-border);
+    flex-wrap: wrap; gap: 8px;
+  }
+  .q-nav-info { display: flex; align-items: center; gap: 10px; }
+  .q-number-badge {
+    font-family: 'Kaisei Decol', serif; font-size: 0.85rem; font-weight: 700;
+    color: var(--accent); background: rgba(255,215,0,0.12);
+    border: 1px solid rgba(255,215,0,0.3); padding: 3px 10px; border-radius: 20px;
+  }
+  .q-status-badge {
+    font-size: 0.8rem; padding: 3px 10px; border-radius: 20px; font-weight: 700;
+  }
+  .q-status-badge.idle { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+  .q-status-badge.reading { background: rgba(168,255,120,0.15); color: #A8FF78; animation: blink-badge 1s ease infinite; }
+  @keyframes blink-badge { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .q-status-badge.paused { background: rgba(255,159,67,0.15); color: #FF9F43; }
+  .q-status-badge.done { background: rgba(126,184,255,0.15); color: #7EB8FF; }
+
+  .q-speed-control {
+    display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: rgba(255,255,255,0.55);
+  }
+  .speed-btn {
+    width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--panel-border);
+    background: transparent; color: rgba(255,255,255,0.6); font-size: 1rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s ease;
+  }
+  .speed-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .question-text-area {
+    padding: 22px 24px; min-height: 120px;
+    font-size: clamp(1.6rem, 4.5vw, 2.8rem); font-weight: 700; line-height: 1.75;
+    letter-spacing: 0.06em; position: relative;
+  }
+  .q-revealed { color: var(--text); }
+  .q-cursor {
+    display: inline-block; width: 3px; height: 1.1em;
+    background: var(--accent); vertical-align: middle;
+    margin-left: 2px; animation: cursor-blink 0.7s step-end infinite;
+  }
+  @keyframes cursor-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .q-cursor.stopped { animation: none; background: #FF9F43; }
+
+  .answer-area { padding: 0 20px 16px; display: none; }
+  .answer-label { font-size: 0.78rem; color: rgba(255,255,255,0.45); margin-bottom: 6px; letter-spacing: 0.08em; }
+  .answer-text {
+    font-family: 'Kaisei Decol', serif; font-size: clamp(1.2rem, 3.5vw, 1.8rem); font-weight: 700;
+    color: #FFD700; text-shadow: 0 0 16px rgba(255,215,0,0.5);
+  }
+
+  .q-nav-btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  /* ===== BUZZER STATUS ===== */
+  .buzzer-status {
+    border-radius: 18px; border: 2px solid var(--panel-border); background: var(--panel);
+    backdrop-filter: blur(10px); padding: 16px; margin-bottom: 14px;
+    text-align: center; min-height: 90px; display: flex;
+    align-items: center; justify-content: center; flex-direction: column;
+    gap: 6px; transition: all 0.4s ease;
+  }
+  .buzzer-status.active {
+    border-color: var(--winner-color, gold);
+    box-shadow: 0 0 40px var(--winner-color, gold);
+    animation: glow-status 1s ease-in-out infinite alternate;
+  }
+  @keyframes glow-status {
+    from { box-shadow: 0 0 20px var(--winner-color, gold); }
+    to { box-shadow: 0 0 60px var(--winner-color, gold); }
+  }
+  .buzzer-status .status-text { font-size: 1.3rem; font-weight: 700; font-family: 'Kaisei Decol', serif; }
+  .buzzer-status .status-sub { font-size: 0.85rem; color: rgba(255,255,255,0.55); }
+  .buzzer-status .winner-name { font-size: 1.8rem; font-weight: 900; font-family: 'Kaisei Decol', serif; }
+
+  #answer-controls { margin-bottom: 10px; }
+
+  .rank-display {
+    display: none; padding: 8px 14px; border-radius: 10px;
+    background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.25);
+    font-size: 0.85rem; color: rgba(255,255,255,0.65); flex-wrap: wrap; gap: 6px;
+  }
+  .rank-item { display: inline-flex; align-items: center; gap: 4px; margin: 2px 3px; }
+
+  /* ===== QUESTION EDITOR ===== */
+  #q-editor-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.82); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  #q-editor-overlay.open { display: flex; }
+  .q-editor-box {
+    background: #111230; border: 2px solid rgba(255,215,0,0.3);
+    border-radius: 24px; width: min(680px, 96vw); max-height: 90vh;
+    overflow-y: auto; padding: 22px;
+  }
+  .q-editor-title {
+    font-family: 'Kaisei Decol', serif; color: var(--accent);
+    font-size: 1.25rem; margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .q-col-labels {
+    display: grid; grid-template-columns: 28px 1fr 200px 36px;
+    gap: 8px; margin-bottom: 4px; padding: 0 2px;
+  }
+  .q-col-label { font-size: 0.72rem; color: rgba(255,255,255,0.4); padding-left: 2px; }
+  .q-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .q-row {
+    display: grid; grid-template-columns: 28px 1fr 200px 36px;
+    gap: 8px; align-items: start;
+  }
+  .q-row-num {
+    font-family: 'Kaisei Decol', serif; color: rgba(255,255,255,0.4);
+    font-size: 0.85rem; padding-top: 10px; text-align: right;
+  }
+  .q-input {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 10px; padding: 8px 11px; color: var(--text);
+    font-family: 'Zen Maru Gothic', sans-serif; font-size: 0.88rem;
+    width: 100%; resize: vertical; min-height: 38px; transition: border-color 0.2s;
+  }
+  .q-input:focus { outline: none; border-color: rgba(255,215,0,0.5); }
+  .q-input.answer-input { border-color: rgba(168,255,120,0.18); }
+  .q-input.answer-input:focus { border-color: rgba(168,255,120,0.5); }
+  .q-del-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255,107,107,0.3);
+    background: transparent; color: rgba(255,107,107,0.6); font-size: 1rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    margin-top: 3px; transition: all 0.15s; flex-shrink: 0;
+  }
+  .q-del-btn:hover { background: rgba(255,107,107,0.15); color: #FF6B6B; }
+  .q-editor-footer { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-top: 4px; }
+
+  /* ===== STUDENT SCREEN ===== */
+  #student-screen { padding: 8px 14px 30px; display: none; }
+
+  #team-select-area { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 20px 10px; }
+  #team-select-area .prompt { font-size: 1.15rem; font-weight: 700; color: rgba(255,255,255,0.8); text-align: center; }
+  .team-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: min(340px, 90vw); }
+  .team-select-btn {
+    aspect-ratio: 1; border-radius: 18px; border: 3px solid transparent;
+    background: var(--panel); backdrop-filter: blur(10px); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 5px; font-family: 'Zen Maru Gothic', sans-serif; font-size: 1rem;
+    font-weight: 700; color: var(--text); transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    position: relative; overflow: hidden;
+  }
+  .team-select-btn::before { content: ''; position: absolute; inset: 0; background: var(--team-color); opacity: 0.08; }
+  .team-select-btn:hover { border-color: var(--team-color); transform: scale(1.08); box-shadow: 0 0 30px var(--team-color); }
+  .team-select-btn .t-emoji { font-size: 2.2rem; }
+  .team-select-btn .t-name { color: var(--team-color); }
+
+  #buzzer-area {
+    display: none; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 60vh; gap: 22px; text-align: center;
+  }
+  .current-team-badge {
+    display: inline-flex; align-items: center; gap: 10px; padding: 9px 22px;
+    border-radius: 50px; font-size: 1rem; font-weight: 700;
+    border: 2px solid var(--team-color, gold); color: var(--team-color, gold);
+    background: rgba(255,255,255,0.05);
+  }
+  .buzzer-btn {
+    width: min(230px, 68vw); height: min(230px, 68vw); border-radius: 50%; border: 6px solid;
+    font-family: 'Kaisei Decol', serif; font-size: 1.9rem; font-weight: 700; cursor: pointer;
+    position: relative; overflow: hidden; transition: all 0.2s ease;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; letter-spacing: 0.05em;
+  }
+  .buzzer-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.25), transparent 60%);
+  }
+  .buzzer-btn.ready {
+    background: var(--team-color, gold); border-color: rgba(255,255,255,0.6); color: var(--bg-deep);
+    box-shadow: 0 0 60px var(--team-color, gold), 0 20px 60px rgba(0,0,0,0.5);
+    animation: buzzer-idle 2s ease-in-out infinite;
+  }
+  @keyframes buzzer-idle {
+    0%,100% { box-shadow: 0 0 40px var(--team-color, gold), 0 20px 40px rgba(0,0,0,0.5); transform: scale(1); }
+    50% { box-shadow: 0 0 80px var(--team-color, gold), 0 20px 60px rgba(0,0,0,0.5); transform: scale(1.02); }
+  }
+  .buzzer-btn.ready:hover { transform: scale(1.06) !important; animation: none; box-shadow: 0 0 100px var(--team-color, gold), 0 30px 80px rgba(0,0,0,0.6); }
+  .buzzer-btn.ready:active { transform: scale(0.94) !important; }
+  .buzzer-btn.pressed {
+    background: #A8FF78; border-color: rgba(255,255,255,0.8); color: #0A1A0A;
+    animation: buzz-success 0.5s ease; box-shadow: 0 0 80px #A8FF78, 0 20px 60px rgba(0,0,0,0.5); cursor: not-allowed;
+  }
+  @keyframes buzz-success { 0%{transform:scale(0.9)} 60%{transform:scale(1.1)} 100%{transform:scale(1)} }
+  .buzzer-btn.locked {
+    background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.3); cursor: not-allowed; box-shadow: none; animation: none;
+  }
+  .buzzer-btn.waiting-start {
+    background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.3); cursor: not-allowed; box-shadow: none; animation: none;
+  }
+  .buzzer-status-student { font-size: 0.95rem; color: rgba(255,255,255,0.6); min-height: 2em; }
+  .buzzer-status-student.won { color: #A8FF78; font-weight: 700; font-size: 1.1rem; }
+  .buzzer-status-student.lost { color: rgba(255,255,255,0.4); }
+
+  /* ===== CELEBRATION ===== */
+  #celebration { position: fixed; inset: 0; z-index: 100; pointer-events: none; display: none; }
+  .confetti-piece { position: absolute; border-radius: 2px; animation: fall linear forwards; top: -20px; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+
+  @media (max-width: 520px) {
+    .scoreboard { grid-template-columns: repeat(2, 1fr); }
+    .score-card .team-score { font-size: 1.7rem; }
+    .q-col-labels, .q-row { grid-template-columns: 24px 1fr 36px; }
+    .q-col-labels .q-col-label:nth-child(3),
+    .q-row .answer-input { grid-column: 2; }
+    .q-del-btn { grid-row: 1; grid-column: 3; }
+  }
+</style>
+</head>
+<body>
+
+<div id="starfield"></div>
+<div id="celebration"></div>
+
+<!-- Question editor modal -->
+<div id="q-editor-overlay">
+  <div class="q-editor-box">
+    <div class="q-editor-title">
+      <span>📝 問題を編集する</span>
+      <button class="btn btn-back" onclick="closeEditor()" style="font-size:0.82rem;padding:6px 13px;">✕ 閉じる</button>
+    </div>
+    <div class="q-col-labels">
+      <div class="q-col-label"></div>
+      <div class="q-col-label">問題文</div>
+      <div class="q-col-label">答え（任意）</div>
+      <div class="q-col-label"></div>
+    </div>
+    <div class="q-list" id="q-list"></div>
+    <div class="q-editor-footer">
+      <button class="btn btn-gold" onclick="addQuestion()">＋ 問題を追加</button>
+      <button class="btn btn-correct" onclick="saveAndClose()">💾 保存して閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="title-bar">
+    <h1>🌟 班対抗クイズ大会 🌟</h1>
+    <div class="subtitle">みんなで楽しもう！</div>
+  </div>
+
+  <!-- MODE SELECT -->
+  <div id="mode-select">
+    <div class="team-count-box">
+      <div class="tct-label">🏷️ 班の数を選んでください</div>
+      <div class="count-btns" id="count-btns"></div>
+    </div>
+    <button class="mode-btn" onclick="showTeacher()">
+      <span class="icon">🎓</span>
+      <div class="info"><div class="label">先生用画面</div><div class="desc">問題出題・早押し判定・ポイント管理</div></div>
+    </button>
+    <button class="mode-btn" onclick="showStudent()">
+      <span class="icon">⚡</span>
+      <div class="info"><div class="label">生徒用画面</div><div class="desc">班を選んで早押しに挑戦！</div></div>
+    </button>
+  </div>
+
+  <!-- TEACHER SCREEN -->
+  <div id="teacher-screen">
+    <div class="back-nav">
+      <button class="btn btn-back" onclick="goHome()">← ホームへ</button>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">🎓 先生用ダッシュボード</div>
+      <div class="controls">
+        <button class="btn btn-purple" onclick="openEditor()">📝 問題を編集</button>
+        <button class="btn btn-reset" onclick="fullReset()">🔄 全リセット</button>
+      </div>
+    </div>
+
+    <!-- Scoreboard -->
+    <div class="scoreboard" id="teacher-scoreboard"></div>
+
+    <!-- Question Panel -->
+    <div class="question-panel">
+      <div class="question-panel-header">
+        <div class="q-nav-info">
+          <div class="q-number-badge" id="q-number-badge">第 1 問</div>
+          <div class="q-status-badge idle" id="q-status-badge">待機中</div>
+        </div>
+        <div class="q-speed-control">
+          <span>速さ：</span>
+          <button class="speed-btn" onclick="changeSpeed(-1)">🐢</button>
+          <span id="speed-label" style="color:var(--accent);font-weight:700;min-width:2.2em;text-align:center;">普通</span>
+          <button class="speed-btn" onclick="changeSpeed(1)">🐇</button>
+        </div>
+        <div class="q-nav-btns">
+          <button class="btn btn-back" onclick="prevQuestion()" style="padding:6px 12px;font-size:0.8rem;">◀ 前</button>
+          <button class="btn btn-gold" id="btn-start-q" onclick="startQuestion()">▶ 問題を読む</button>
+          <button class="btn btn-back" onclick="nextQuestion()" style="padding:6px 12px;font-size:0.8rem;">次 ▶</button>
+        </div>
+      </div>
+      <div class="question-text-area" id="question-text-area">
+        <span class="q-revealed" id="q-revealed-text"></span><span class="q-cursor" id="q-cursor"></span>
+      </div>
+      <div class="answer-area" id="answer-area">
+        <div class="answer-label">✅ 答え</div>
+        <div class="answer-text" id="answer-text"></div>
+      </div>
+    </div>
+
+    <!-- Buzzer Status -->
+    <div class="buzzer-status" id="teacher-buzzer-status">
+      <div class="status-text">⏳ 待機中...</div>
+      <div class="status-sub">「問題を読む」を押すと早押し可能になります</div>
+    </div>
+
+    <!-- Answer controls (shown when a team has buzzed) -->
+    <div id="answer-controls" style="display:none; margin-bottom:12px;">
+      <div class="controls">
+        <button class="btn btn-correct" onclick="addPoint()">⭕ 正解！+1ポイント</button>
+        <button class="btn btn-wrong" onclick="wrongAnswer()">❌ 不正解→問題再開</button>
+        <button class="btn btn-gold" onclick="showAnswer()">💡 答えを表示</button>
+      </div>
+    </div>
+
+    <!-- Rank -->
+    <div class="rank-display" id="rank-display"></div>
+  </div>
+
+  <!-- STUDENT SCREEN -->
+  <div id="student-screen">
+    <div class="back-nav">
+      <button class="btn btn-back" onclick="goHome()">← ホームへ</button>
+    </div>
+    <div id="team-select-area">
+      <div class="prompt">🌟 あなたの班を選んでね！</div>
+      <div class="team-grid" id="team-grid"></div>
+    </div>
+    <div id="buzzer-area">
+      <div class="current-team-badge" id="current-team-badge"></div>
+      <button class="buzzer-btn waiting-start" id="main-buzzer" onclick="pressBuzzer()">
+        <span style="font-size:2.2rem;">⏳</span>
+        <span style="font-size:1rem;">待機中</span>
+      </button>
+      <div class="buzzer-status-student" id="student-buzz-status">先生が問題を読み始めたら押せるよ！</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DEFAULT QUESTIONS (30問)
+// ============================================================
+const DEFAULT_QUESTIONS = [
+  { q: '日本で一番高い山は何ですか？', a: '富士山' },
+  { q: '1年は何日ありますか？', a: '365日（うるう年は366日）' },
+  { q: '水の化学式はどれですか？　H₂O　CO₂　O₂　NaCl', a: 'H₂O' },
+  { q: '人間の体で最も大きい骨はどこにある骨ですか？', a: '大腿骨（ふとももの骨）' },
+  { q: '日本の国旗の色は何色と何色ですか？', a: '白と赤' },
+  { q: 'かけ算のことを英語で何といいますか？　Multiplication　Division　Subtraction', a: 'Multiplication' },
+  { q: '地球から一番近い星は何ですか？（太陽以外で）', a: 'プロキシマ・ケンタウリ' },
+  { q: '「吾輩は猫である」を書いた作家は誰ですか？', a: '夏目漱石' },
+  { q: '100÷4×3はいくつですか？', a: '75' },
+  { q: '世界で一番長い川はどれですか？　アマゾン川　ナイル川　ミシシッピ川', a: 'ナイル川（約6,650km）' },
+  { q: '虹は何色ありますか？日本での数え方で答えてください。', a: '7色' },
+  { q: '「Hello」は何語ですか？', a: '英語' },
+  { q: '電気を発明したと言われているアメリカの科学者は誰ですか？', a: 'トーマス・エジソン' },
+  { q: '日本の47都道府県の中で面積が一番大きいのはどこですか？', a: '北海道' },
+  { q: '植物が光合成で必要とする気体は何ですか？', a: '二酸化炭素（CO₂）' },
+  { q: '「モナ・リザ」を描いた芸術家は誰ですか？', a: 'レオナルド・ダ・ヴィンチ' },
+  { q: 'サッカーのワールドカップは何年に1度開催されますか？', a: '4年に1度' },
+  { q: '三角形の内角の和は何度ですか？', a: '180度' },
+  { q: '日本語で「ありがとう」は英語で何ですか？', a: 'Thank you' },
+  { q: '地球の表面の約何パーセントが海ですか？　51%　61%　71%　81%', a: '約71%' },
+  { q: '人間の乳歯は何本ありますか？', a: '20本' },
+  { q: '「走れメロス」を書いた作家は誰ですか？', a: '太宰治' },
+  { q: '光の速さは1秒間に約何kmですか？　3万km　30万km　300万km', a: '約30万km' },
+  { q: '日本の国鳥は何ですか？', a: 'キジ' },
+  { q: '1オクターブは何音ありますか？', a: '8音（ド〜ド）' },
+  { q: '人間の体の中で最も硬い組織は何ですか？', a: '歯のエナメル質' },
+  { q: '「平家物語」の書き出し「祇園精舎の鐘の声」の次に続く言葉は何ですか？', a: '諸行無常の響きあり' },
+  { q: '世界で一番小さい国はどこですか？', a: 'バチカン市国' },
+  { q: '日本で初めて征夷大将軍になったと言われる人物は誰ですか？', a: '坂上田村麻呂' },
+  { q: 'ピアノの鍵盤で、黒鍵が存在しない隣り合う2つの音の組み合わせはどれとどれですか？（2組答えてください）', a: 'ミとファ、シとド' },
+];
+
+function loadQuestions() {
+  try { const s = localStorage.getItem('quiz_questions_v2'); if (s) return JSON.parse(s); } catch(e) {}
+  return DEFAULT_QUESTIONS.map(q => ({...q}));
+}
+function saveQuestions(qs) { localStorage.setItem('quiz_questions_v2', JSON.stringify(qs)); }
+let QUESTIONS = loadQuestions();
+
+// ============================================================
+// TEAMS
+// ============================================================
+const ALL_TEAMS = [
+  { id: 1, name: '1班', emoji: '🦊', color: '#FF9F43' },
+  { id: 2, name: '2班', emoji: '🐬', color: '#7EB8FF' },
+  { id: 3, name: '3班', emoji: '🌸', color: '#FF6B9D' },
+  { id: 4, name: '4班', emoji: '🐉', color: '#A8FF78' },
+  { id: 5, name: '5班', emoji: '⭐', color: '#FFD700' },
+  { id: 6, name: '6班', emoji: '🦋', color: '#C77DFF' },
+  { id: 7, name: '7班', emoji: '🔥', color: '#FF6B6B' },
+  { id: 8, name: '8班', emoji: '🌈', color: '#78EDFF' },
+];
+let teamCount = parseInt(localStorage.getItem('quiz_team_count') || '6');
+let TEAMS = ALL_TEAMS.slice(0, teamCount);
+
+function setTeamCount(n) {
+  teamCount = n; TEAMS = ALL_TEAMS.slice(0, n);
+  localStorage.setItem('quiz_team_count', n);
+  const st = getState();
+  st.scores = Object.fromEntries(ALL_TEAMS.map(t => [t.id, 0]));
+  st.buzzedTeam = null; st.locked = false; st.questionActive = false;
+  saveState(st); renderCountBtns();
+}
+function renderCountBtns() {
+  const cb = document.getElementById('count-btns'); if (!cb) return; cb.innerHTML = '';
+  for (let i = 2; i <= 8; i++) {
+    const b = document.createElement('button');
+    b.className = 'count-btn' + (i === teamCount ? ' selected' : '');
+    b.textContent = i; b.onclick = () => setTeamCount(i); cb.appendChild(b);
+  }
+}
+
+// ============================================================
+// SHARED STATE
+// ============================================================
+const STATE_KEY = 'quiz_state_v3';
+function getState() {
+  try { const s = localStorage.getItem(STATE_KEY); if (s) return JSON.parse(s); } catch(e) {}
+  return { scores: Object.fromEntries(ALL_TEAMS.map(t => [t.id, 0])), buzzedTeam: null, locked: false, questionActive: false };
+}
+function saveState(st) {
+  localStorage.setItem(STATE_KEY, JSON.stringify(st));
+  window.dispatchEvent(new StorageEvent('storage', { key: STATE_KEY }));
+}
+
+// ============================================================
+// QUESTION REVEAL ENGINE
+// ============================================================
+const SPEEDS = [
+  { label: '遅い',  ms: 200 },
+  { label: '普通',  ms: 100 },
+  { label: '速い',  ms: 50  },
+  { label: '爆速',  ms: 20  },
+];
+let speedIdx = 1;
+let currentQIdx = 0;
+let revealedChars = 0;
+let revealTimer = null;
+let revealState = 'idle'; // idle | reading | paused | done
+
+function changeSpeed(delta) {
+  speedIdx = Math.max(0, Math.min(SPEEDS.length - 1, speedIdx + delta));
+  document.getElementById('speed-label').textContent = SPEEDS[speedIdx].label;
+  if (revealState === 'reading') { clearInterval(revealTimer); startRevealTimer(); }
+}
+
+function updateQNumberBadge() {
+  const el = document.getElementById('q-number-badge');
+  if (el) el.textContent = `第 ${currentQIdx + 1} 問 / ${QUESTIONS.length}問`;
+}
+
+function prevQuestion() {
+  stopReveal();
+  currentQIdx = Math.max(0, currentQIdx - 1);
+  resetQuestionDisplay();
+}
+function nextQuestion() {
+  stopReveal();
+  currentQIdx = Math.min(QUESTIONS.length - 1, currentQIdx + 1);
+  resetQuestionDisplay();
+}
+
+function resetQuestionDisplay() {
+  revealedChars = 0; revealState = 'idle';
+  const rt = document.getElementById('q-revealed-text');
+  const cur = document.getElementById('q-cursor');
+  const aa = document.getElementById('answer-area');
+  const btnS = document.getElementById('btn-start-q');
+  if (rt) rt.textContent = '';
+  if (cur) { cur.style.display = 'inline-block'; cur.className = 'q-cursor'; }
+  if (aa) aa.style.display = 'none';
+  if (btnS) { btnS.textContent = '▶ 問題を読む'; btnS.className = 'btn btn-gold'; }
+  updateQNumberBadge();
+  updateQStatusBadge('idle', '待機中');
+  // reset shared state
+  const st = getState();
+  st.buzzedTeam = null; st.locked = false; st.questionActive = false;
+  saveState(st);
+  renderBuzzerStatus(st);
+  const ac = document.getElementById('answer-controls');
+  if (ac) ac.style.display = 'none';
+}
+
+function startQuestion() {
+  if (revealState === 'done') { nextQuestion(); return; }
+  if (revealState === 'reading') {
+    // pause
+    clearInterval(revealTimer); revealState = 'paused';
+    updateQStatusBadge('paused', '一時停止中');
+    const b = document.getElementById('btn-start-q');
+    if (b) { b.textContent = '▶ 再開'; b.className = 'btn btn-gold'; }
+    return;
+  }
+  // start or resume
+  revealState = 'reading';
+  const cur = document.getElementById('q-cursor');
+  if (cur) { cur.style.display = 'inline-block'; cur.className = 'q-cursor'; }
+  updateQStatusBadge('reading', '読み上げ中…');
+  const b = document.getElementById('btn-start-q');
+  if (b) { b.textContent = '⏸ 一時停止'; b.className = 'btn btn-reset'; }
+  // enable buzzer
+  const st = getState(); st.questionActive = true; saveState(st);
+  startRevealTimer();
+}
+
+function startRevealTimer() {
+  clearInterval(revealTimer);
+  revealTimer = setInterval(() => {
+    const q = QUESTIONS[currentQIdx];
+    if (!q) { clearInterval(revealTimer); return; }
+    if (revealedChars >= q.q.length) {
+      clearInterval(revealTimer); revealState = 'done';
+      const cur = document.getElementById('q-cursor');
+      if (cur) cur.className = 'q-cursor stopped';
+      updateQStatusBadge('done', '読み上げ完了');
+      const b = document.getElementById('btn-start-q');
+      if (b) { b.textContent = '次の問題へ ▶'; b.className = 'btn btn-back'; }
+      return;
+    }
+    revealedChars++;
+    const rt = document.getElementById('q-revealed-text');
+    if (rt) rt.textContent = q.q.slice(0, revealedChars);
+  }, SPEEDS[speedIdx].ms);
+}
+
+function stopReveal() {
+  clearInterval(revealTimer);
+  const cur = document.getElementById('q-cursor');
+  if (cur) cur.className = 'q-cursor stopped';
+}
+
+function updateQStatusBadge(cls, text) {
+  const el = document.getElementById('q-status-badge');
+  if (el) { el.className = 'q-status-badge ' + cls; el.textContent = text; }
+}
+
+function showAnswer() {
+  const q = QUESTIONS[currentQIdx]; if (!q || !q.a) return;
+  const aa = document.getElementById('answer-area');
+  const at = document.getElementById('answer-text');
+  if (at) at.textContent = q.a;
+  if (aa) aa.style.display = 'block';
+}
+
+// ============================================================
+// NAV
+// ============================================================
+let currentView = 'home';
+let myTeamId = null;
+let pollInterval = null;
+let lastState = JSON.stringify(getState());
+
+function showTeacher() {
+  currentView = 'teacher';
+  document.getElementById('mode-select').style.display = 'none';
+  document.getElementById('teacher-screen').style.display = 'block';
+  document.getElementById('student-screen').style.display = 'none';
+  QUESTIONS = loadQuestions();
+  resetQuestionDisplay();
+  renderTeacher();
+  startPolling();
+}
+function showStudent() {
+  currentView = 'student';
+  document.getElementById('mode-select').style.display = 'none';
+  document.getElementById('teacher-screen').style.display = 'none';
+  document.getElementById('student-screen').style.display = 'block';
+  document.getElementById('team-select-area').style.display = 'flex';
+  document.getElementById('buzzer-area').style.display = 'none';
+  myTeamId = null; renderTeamSelect(); startPolling();
+}
+function goHome() {
+  stopReveal(); currentView = 'home'; myTeamId = null; stopPolling();
+  document.getElementById('mode-select').style.display = 'flex';
+  document.getElementById('teacher-screen').style.display = 'none';
+  document.getElementById('student-screen').style.display = 'none';
+}
+
+// ============================================================
+// TEACHER RENDER
+// ============================================================
+function renderTeacher() {
+  const st = getState();
+  renderScoreboard(st); renderBuzzerStatus(st); renderRank(st);
+}
+
+function renderScoreboard(st) {
+  const sb = document.getElementById('teacher-scoreboard'); if (!sb) return;
+  sb.innerHTML = TEAMS.map(t => `
+    <div class="score-card ${st.buzzedTeam === t.id ? 'buzzing' : ''}" style="--team-color:${t.color}">
+      <div class="team-emoji">${t.emoji}</div>
+      <div class="team-name">${t.name}</div>
+      <div class="team-score">${st.scores[t.id] || 0}</div>
+      <div class="score-label">ポイント</div>
+    </div>`).join('');
+}
+
+function renderBuzzerStatus(st) {
+  const bs = document.getElementById('teacher-buzzer-status');
+  const ac = document.getElementById('answer-controls');
+  if (!bs) return;
+  if (st.buzzedTeam) {
+    const team = TEAMS.find(t => t.id === st.buzzedTeam); if (!team) return;
+    bs.className = 'buzzer-status active';
+    bs.style.setProperty('--winner-color', team.color);
+    bs.innerHTML = `
+      <div class="status-text" style="color:${team.color}">⚡ 早押し！</div>
+      <div class="winner-name" style="color:${team.color}">${team.emoji} ${team.name}</div>
+      <div class="status-sub">が最初に押しました！</div>`;
+    if (ac) ac.style.display = 'block';
+    // pause reveal if running
+    if (revealState === 'reading') {
+      clearInterval(revealTimer); revealState = 'paused';
+      const cur = document.getElementById('q-cursor');
+      if (cur) cur.className = 'q-cursor stopped';
+      updateQStatusBadge('paused', '⚡ 早押しで停止中');
+      const b = document.getElementById('btn-start-q');
+      if (b) { b.textContent = '▶ 問題を再開'; b.className = 'btn btn-gold'; }
+    }
+  } else {
+    bs.className = 'buzzer-status';
+    bs.style.removeProperty('--winner-color');
+    bs.innerHTML = `
+      <div class="status-text">⏳ 待機中...</div>
+      <div class="status-sub">${st.questionActive ? 'どの班が最初に押すかな？' : '「問題を読む」を押すと早押し可能になります'}</div>`;
+    if (ac) ac.style.display = 'none';
+  }
+}
+
+function renderRank(st) {
+  const rd = document.getElementById('rank-display'); if (!rd) return;
+  const sorted = [...TEAMS].sort((a, b) => (st.scores[b.id]||0) - (st.scores[a.id]||0));
+  rd.style.display = 'flex';
+  rd.innerHTML = '🏆 順位：' + sorted.map((t, i) => {
+    const medals = ['🥇','🥈','🥉'];
+    return `<span class="rank-item">${medals[i]||(i+1)+'位'} ${t.emoji}${t.name} ${st.scores[t.id]||0}pt</span>`;
+  }).join('');
+}
+
+function fullReset() {
+  stopReveal();
+  const st = getState();
+  st.scores = Object.fromEntries(ALL_TEAMS.map(t => [t.id, 0]));
+  st.buzzedTeam = null; st.locked = false; st.questionActive = false;
+  saveState(st);
+  currentQIdx = 0;
+  resetQuestionDisplay();
+  renderTeacher();
+}
+
+function addPoint() {
+  const st = getState(); if (!st.buzzedTeam) return;
+  st.scores[st.buzzedTeam] = (st.scores[st.buzzedTeam] || 0) + 1;
+  const team = TEAMS.find(t => t.id === st.buzzedTeam);
+  celebrate(team.color);
+  st.buzzedTeam = null; st.locked = false; st.questionActive = false;
+  saveState(st);
+  stopReveal();
+  revealState = 'done';
+  updateQStatusBadge('done', '✅ 正解！');
+  const b = document.getElementById('btn-start-q');
+  if (b) { b.textContent = '次の問題へ ▶'; b.className = 'btn btn-back'; }
+  renderTeacher();
+}
+
+function wrongAnswer() {
+  const st = getState();
+  st.buzzedTeam = null; st.locked = false;
+  saveState(st);
+  renderBuzzerStatus(st); renderScoreboard(st); renderRank(st);
+  // resume reveal
+  if (revealState === 'paused') {
+    revealState = 'reading';
+    const cur = document.getElementById('q-cursor');
+    if (cur) cur.className = 'q-cursor';
+    updateQStatusBadge('reading', '読み上げ中…');
+    const b = document.getElementById('btn-start-q');
+    if (b) { b.textContent = '⏸ 一時停止'; b.className = 'btn btn-reset'; }
+    startRevealTimer();
+  }
+}
+
+// ============================================================
+// STUDENT
+// ============================================================
+function renderTeamSelect() {
+  const tg = document.getElementById('team-grid'); if (!tg) return;
+  tg.innerHTML = TEAMS.map(t => `
+    <button class="team-select-btn" style="--team-color:${t.color}" onclick="selectTeam(${t.id})">
+      <span class="t-emoji">${t.emoji}</span>
+      <span class="t-name">${t.name}</span>
+    </button>`).join('');
+}
+
+function selectTeam(teamId) {
+  myTeamId = teamId;
+  const team = TEAMS.find(t => t.id === teamId);
+  document.getElementById('team-select-area').style.display = 'none';
+  const ba = document.getElementById('buzzer-area'); ba.style.display = 'flex';
+  const badge = document.getElementById('current-team-badge');
+  badge.style.setProperty('--team-color', team.color);
+  badge.innerHTML = `${team.emoji} ${team.name}`;
+  const btn = document.getElementById('main-buzzer');
+  btn.style.setProperty('--team-color', team.color);
+  updateBuzzerUI();
+}
+
+function pressBuzzer() {
+  if (!myTeamId) return;
+  const st = getState();
+  if (!st.questionActive) return;
+  if (st.locked || st.buzzedTeam) return;
+  st.buzzedTeam = myTeamId; st.buzzTime = Date.now(); st.locked = true;
+  saveState(st); updateBuzzerUI();
+}
+
+function updateBuzzerUI() {
+  if (!myTeamId) return;
+  const st = getState();
+  const btn = document.getElementById('main-buzzer');
+  const status = document.getElementById('student-buzz-status');
+  if (!btn) return;
+  const team = TEAMS.find(t => t.id === myTeamId);
+  btn.style.setProperty('--team-color', team?.color || 'gold');
+
+  if (!st.questionActive && !st.buzzedTeam) {
+    btn.className = 'buzzer-btn waiting-start';
+    btn.innerHTML = `<span style="font-size:2.2rem">⏳</span><span style="font-size:1rem">待機中</span>`;
+    status.className = 'buzzer-status-student';
+    status.textContent = '先生が問題を読み始めたら押せるよ！';
+  } else if (st.buzzedTeam === myTeamId) {
+    btn.className = 'buzzer-btn pressed';
+    btn.innerHTML = `<span style="font-size:2.2rem">🎉</span><span>押した！</span>`;
+    status.className = 'buzzer-status-student won';
+    status.textContent = '⚡ あなたの班が一番早かった！';
+  } else if (st.buzzedTeam && st.buzzedTeam !== myTeamId) {
+    btn.className = 'buzzer-btn locked';
+    btn.innerHTML = `<span style="font-size:2.2rem">🔒</span><span>ロック中</span>`;
+    const winner = TEAMS.find(t => t.id === st.buzzedTeam);
+    status.className = 'buzzer-status-student lost';
+    status.textContent = `${winner?.emoji}${winner?.name}が先に押しました`;
+  } else {
+    btn.className = 'buzzer-btn ready';
+    btn.innerHTML = `<span style="font-size:2.2rem">🔔</span><span>押す！</span>`;
+    status.className = 'buzzer-status-student';
+    status.textContent = '準備完了！いつでも押してOK！';
+  }
+}
+
+// ============================================================
+// QUESTION EDITOR
+// ============================================================
+function openEditor() {
+  QUESTIONS = loadQuestions(); renderQList();
+  document.getElementById('q-editor-overlay').classList.add('open');
+}
+function closeEditor() {
+  document.getElementById('q-editor-overlay').classList.remove('open');
+}
+function saveAndClose() {
+  const rows = document.querySelectorAll('#q-list .q-row');
+  const newQs = [];
+  rows.forEach(row => {
+    const ta = row.querySelector('textarea');
+    const inp = row.querySelector('input');
+    const qText = ta?.value.trim();
+    const aText = inp?.value.trim();
+    if (qText) newQs.push({ q: qText, a: aText || '' });
+  });
+  QUESTIONS = newQs;
+  saveQuestions(QUESTIONS);
+  updateQNumberBadge();
+  closeEditor();
+}
+function addQuestion() {
+  const list = document.getElementById('q-list');
+  list.appendChild(makeQRow({ q: '', a: '' }, list.children.length));
+  list.lastElementChild.querySelector('textarea')?.focus();
+}
+function deleteQuestion(btn) {
+  btn.closest('.q-row').remove();
+  document.querySelectorAll('#q-list .q-row-num').forEach((el, i) => el.textContent = (i+1)+'.');
+}
+function makeQRow(item, idx) {
+  const row = document.createElement('div'); row.className = 'q-row';
+  row.innerHTML = `
+    <div class="q-row-num">${idx+1}.</div>
+    <textarea class="q-input" placeholder="問題文を入力…" rows="2">${escH(item.q)}</textarea>
+    <input class="q-input answer-input" type="text" placeholder="答え（省略可）" value="${escH(item.a)}">
+    <button class="q-del-btn" onclick="deleteQuestion(this)" title="削除">✕</button>`;
+  return row;
+}
+function renderQList() {
+  const list = document.getElementById('q-list'); list.innerHTML = '';
+  QUESTIONS.forEach((item, i) => list.appendChild(makeQRow(item, i)));
+}
+function escH(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ============================================================
+// POLLING
+// ============================================================
+function startPolling() {
+  stopPolling(); lastState = JSON.stringify(getState());
+  pollInterval = setInterval(() => {
+    const cur = JSON.stringify(getState());
+    if (cur !== lastState) {
+      lastState = cur;
+      if (currentView === 'teacher') renderTeacher();
+      if (currentView === 'student' && myTeamId) updateBuzzerUI();
+    }
+  }, 200);
+}
+function stopPolling() { if (pollInterval) { clearInterval(pollInterval); pollInterval = null; } }
+
+window.addEventListener('storage', (e) => {
+  if (e.key === STATE_KEY) {
+    if (currentView === 'teacher') renderTeacher();
+    if (currentView === 'student' && myTeamId) updateBuzzerUI();
+  }
+});
+
+// ============================================================
+// CELEBRATION
+// ============================================================
+function celebrate(color) {
+  const cel = document.getElementById('celebration'); cel.style.display = 'block'; cel.innerHTML = '';
+  const colors = [color, '#FFD700', '#FF6B9D', '#A8FF78', '#7EB8FF', '#C77DFF'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('div'); c.className = 'confetti-piece';
+    c.style.cssText = `left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${6+Math.random()*10}px;height:${6+Math.random()*10}px;
+      border-radius:${Math.random()>0.5?'50%':'2px'};
+      animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.5}s;`;
+    cel.appendChild(c);
+  }
+  setTimeout(() => { cel.style.display = 'none'; }, 3500);
+}
+
+// ============================================================
+// STARFIELD
+// ============================================================
+function createStars() {
+  const sf = document.getElementById('starfield');
+  for (let i = 0; i < 180; i++) {
+    const s = document.createElement('div'); s.className = 'star';
+    const sz = Math.random()*2.5+0.5;
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;--dur:${2+Math.random()*4}s;--delay:${Math.random()*4}s;`;
+    sf.appendChild(s);
+  }
+  for (let i = 0; i < 3; i++) {
+    const ss = document.createElement('div'); ss.className = 'shooting-star';
+    ss.style.cssText = `top:${10+Math.random()*40}%;left:0;--sdur:${3+Math.random()*3}s;--sdelay:${i*3+Math.random()*3}s;`;
+    sf.appendChild(ss);
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+createStars();
+renderCountBtns();
+updateQNumberBadge();
+</script>
+</body>
+</html>
